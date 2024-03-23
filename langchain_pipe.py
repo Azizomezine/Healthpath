@@ -22,7 +22,7 @@ def return_agent(api_key):
     llm = ChatOpenAI(
             openai_api_key= api_key,
             temperature=0.2,
-            model_name='gpt-4'
+            model_name='gpt-3.5-turbo'
     )
 
     # initialize conversational memory
