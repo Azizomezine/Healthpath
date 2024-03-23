@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 from PIL import Image
 import os 
 import io 
+import pandas as pd
 
 
 
@@ -247,8 +248,52 @@ def Food_Helper():
         st.write(response)
     
 
-def creativity():
-    return 0  
+def Statistics():
+    # Existing sample data
+    data = """FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 07:12 PM,0,457,,,,,,,,,,,,,,
+    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 07:27 PM,0,459,,,,,,,,,,,,,,
+    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 07:42 PM,0,455,,,,,,,,,,,,,,
+    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 07:57 PM,0,437,,,,,,,,,,,,,,
+    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 08:13 PM,0,414,,,,,,,,,,,,,,
+    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 08:28 PM,0,426,,,,,,,,,,,,,,
+    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 08:43 PM,0,433,,,,,,,,,,,,,,
+    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 08:58 PM,0,411,,,,,,,,,,,,,,
+    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 09:13 PM,0,383,,,,,,,,,,,,,,
+    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 09:28 PM,0,357,,,,,,,,,,,,,,
+    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 09:43 PM,0,322,,,,,,,,,,,,,,
+    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 09:58 PM,0,280,,,,,,,,,,,,,,
+    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 10:13 PM,0,231,,,,,,,,,,,,,,
+    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 10:28 PM,0,182,,,,,,,,,,,,,,
+    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 10:43 PM,0,146,,,,,,,,,,,,,,"""
+
+    # Additional data to be added
+    additional_data = """FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 10:58 PM,0,100,,,,,,,,,,,,,,
+    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 11:13 PM,0,90,,,,,,,,,,,,,,
+    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 11:28 PM,0,85,,,,,,,,,,,,,,"""
+
+    # Concatenate additional data to the existing data
+    data += additional_data
+
+    # Function to process data
+    def process_data(data):
+        lines = data.splitlines()
+        data_list = [line.split(",") for line in lines]
+        dates = [row[2].strip() for row in data_list]
+        glucose_values = [int(row[4]) for row in data_list]
+        df = pd.DataFrame({"Date": dates, "Glucose Value": glucose_values})
+        # Optional: Convert "Date" to datetime format
+        df["Date"] = pd.to_datetime(df["Date"])
+        return df
+
+    # Title and header
+    st.title("Blood Glucose Monitoring Chart")
+    st.header("FreeStyle LibreLink Data")
+
+    # Process the data
+    df = process_data(data)
+
+    # Display the line chart
+    st.line_chart(df, x="Date", y="Glucose Value")
 
 if 'current_tab' not in st.session_state:
     st.session_state.current_tab = 'Home'
@@ -257,8 +302,8 @@ with st.sidebar:
     selected_tab = sac.menu([
         sac.MenuItem('Home', icon='house-fill'),
         sac.MenuItem('Assistant', icon='chat-text-fill'),
-        sac.MenuItem('Food-Helper', icon='patch-question-fill'),
-        sac.MenuItem('Creativity', icon='easel2-fill')
+        sac.MenuItem('Food-Helper', icon='bi bi-award-fill'),
+        sac.MenuItem('Statistics', icon='easel2-fill')
     ], color='cyan', size='lg', open_all=True)
 
 if selected_tab != st.session_state.current_tab:
@@ -270,5 +315,5 @@ elif st.session_state.current_tab == 'Assistant':
     Assistant()  
 elif st.session_state.current_tab == 'Food-Helper':
     Food_Helper()
-elif st.session_state.current_tab == 'Creativity':
-    creativity()        
+elif st.session_state.current_tab == 'Statistics':
+    Statistics()        
