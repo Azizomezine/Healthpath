@@ -4,3 +4,7 @@ pandas
 streamlit
 langchain
 pypresence
+google-generativeai
+python-dotenv
+streamlit
+pillow
