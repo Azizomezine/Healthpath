@@ -280,17 +280,26 @@ def Statistics():
         data_list = [line.split(",") for line in lines]
         dates = [row[2].strip() for row in data_list]
         glucose_values = [int(row[4]) for row in data_list]
+        max_glucose = max(glucose_values)
+        min_glucose = min(glucose_values)
         df = pd.DataFrame({"Date": dates, "Glucose Value": glucose_values})
         # Optional: Convert "Date" to datetime format
-        df["Date"] = pd.to_datetime(df["Date"])
-        return df
+        df["Date"] = pd.to_datetime(df["Date"], format='%m-%d-%Y %I:%M %p')
+        return df,max_glucose,min_glucose
 
+    # Process the data
+    df, max_glucose, min_glucose= process_data(data)
+    last_glucose_value = df.iloc[-1]["Glucose Value"]
+    percentage1=(100-last_glucose_value)/100
+    col1, col2, col3 = st.columns(3)
+    col1.metric("highest glucose level", str(max_glucose) +" mg/dL", "max%")
+    col2.metric("lower glucose level", str(min_glucose) +" mg/dL", "-min%")
+    col3.metric("Current glucose level", str(last_glucose_value)+" mg/dL", str(percentage1)+"%")
     # Title and header
     st.title("Blood Glucose Monitoring Chart")
     st.header("FreeStyle LibreLink Data")
 
-    # Process the data
-    df = process_data(data)
+
 
     # Display the line chart
     st.line_chart(df, x="Date", y="Glucose Value")
