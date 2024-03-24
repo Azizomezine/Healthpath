@@ -14,7 +14,7 @@ from PIL import Image
 import os 
 import io 
 import pandas as pd
-
+from datetime import datetime, timedelta  # Import datetime and timedelta explicitly
 
 
 def image_to_byte_array(image: Image) -> bytes:
@@ -27,7 +27,14 @@ API_KEY = os.environ.get("GOOGLE_API_KEY")
 genai.configure(api_key=API_KEY)
 
 load_dotenv()
-
+st.markdown(
+        """
+        <style>
+            {}
+        </style>
+        """.format(open("style.css").read()),
+        unsafe_allow_html=True
+    )
 # ------------------------------------------- Record Voice Notes ----------------------------------------------------------
 
 def record_audio(seconds=5, rate=44100, channels=1):
@@ -76,10 +83,24 @@ vopenai = OP(
 
 # Define your page functions
 def home_page():
-    
-    with open('style.css') as f:
-        st.markdown('<style>{}</style>'.format(f.read()), unsafe_allow_html=True)
     # Display HTML content
+    # st.markdown("""
+    # <div class="area" >
+    #     <ul class="circles">
+    #         <li></li>
+    #         <li></li>
+    #         <li></li>
+    #         <li></li>
+    #         <li></li>
+    #         <li></li>
+    #         <li></li>
+    #         <li></li>
+    #         <li></li>
+    #         <li></li>
+    #     </ul>
+                
+    # </div >
+    # """, unsafe_allow_html=True)
     st.markdown("""
     <div class="area" >
         <ul class="circles">
@@ -99,11 +120,11 @@ def home_page():
     """, unsafe_allow_html=True)
     
     st.session_state['b64_image'] =""
-    with open("./pic.png", "rb") as img_file:
+    with open("./Back.png", "rb") as img_file:
         img_back = base64.b64encode(img_file.read()).decode("utf-8")
         # st.image(f'data:image/png;base64,{img_back}', use_column_width=False)
         st.markdown(f"""<img class="back_img"  src="data:image/png;base64,{img_back}" alt="Frozen Image">""",unsafe_allow_html=True)
-    st.markdown("""<h1 class="Title">Welcome To CogniSmile</h1>""",unsafe_allow_html=True)
+    st.markdown("""<h1 class="Title">Welcome To HealthPath</h1>""",unsafe_allow_html=True)
 
 def generate_speech(input_text):
     speech_file_path = Path("speech.mp3")
@@ -139,7 +160,7 @@ def generateTextFromVoice(path):
 
 
 def Assistant():
-    st.title("DAIT Assistant")
+    st.title("HealthPath Assistant")
 
     # Initialize chat history
     if "messages" not in st.session_state:
@@ -173,12 +194,11 @@ def Assistant():
         
         generate_speech(response)
         autoplay_audio("speech.mp3")
-    if st.button("Record"):
+    if st.button("Talk to me"):
             record_audio()
             VoiceMessage = generateTextFromVoice("./output.wav")
             with st.chat_message("user"):
                 st.markdown(VoiceMessage)
-                
             with st.chat_message("assistant"):
                 response = "".join(response_generator(agent, VoiceMessage))
                 st.markdown(response)
@@ -217,27 +237,60 @@ def Food_Helper():
     ##initialize our streamlit app
 
 
-    st.header("Food Helper")
+    st.header("Determine the right dose of insulin")
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
-    image=""   
+    image=""
+    ICR=st.text_input("insulin-to-carb ratio (ICR) (grams/unit)")   
     if uploaded_file is not None:
         image = Image.open(uploaded_file)
         st.image(image, caption="Uploaded Image.", use_column_width=True)
 
 
-    submit=st.button("Tell me about the  glycemic index")
+    submit=st.button("Discover insights")
 
     input_prompt="""
-    You are an expert in  meal prep AI assistant for diabetics where you need to see the food items from the image
-                and calculate the total glycemic index in mg/dl, also provide the details of every food items with  glycemic index  intake
-                is below format
+    You are an expert in meal prep AI assistant for diabetics. 
 
-                1. Item 1 - no of  glycemic index  in mg/dl 
-                2. Item 2 - no of  glycemic index  in mg/dl
-                ---- 
-                ----
-    Finally you can also mention whether the food is healthy, balanced or not healthy and what all additional food items can be added in the diet which are healthy.
+    **Input:**
 
+    * Image of the meal
+
+    **Output:**
+
+    1. Food Items: List all the food items identified in the image.
+    2. Glycemic Index (GI): Provide the glycemic index (GI) in mg/dl for each food item.
+    3. Total Carbohydrates (CHO): Calculate the total grams of carbohydrate (CHO) for the entire meal.
+    4. Recommended Insulin Dose: 
+        * Analyze the image to estimate the total CHO content in the meal. 
+        * Based on the user's pre-configured insulin-to-carb ratio (ICR), calculate the recommended insulin dose using the formula: Total CHO (grams) / {ICR} (grams/unit) = Recommended Insulin Dose (units).
+
+    **Example Output:**
+
+    1. Food Items:
+        * Apple - 30g
+        * Bread - 50g
+        * Cheese - 10g
+
+    2. Glycemic Index (GI):
+        * Apple - 40 mg/dl
+        * Bread - 70 mg/dl
+        * Cheese - 0 mg/dl (Cheese has minimal impact on blood sugar)
+
+    3. Total Carbohydrates (CHO):  80 grams (calculated by adding the CHO content of each food item)
+
+    4. Recommended Insulin Dose:  
+        * Assuming user's ICR is 1 unit per 10 grams of CHO.
+        * Recommended dose = 80 grams / 10 grams/unit = 8 units
+
+    **Additional Information:**
+
+    * Indicate if the meal is balanced or not, considering factors like protein, fat, and fiber content (if possible to estimate from the image).
+    * Suggest additional healthy food items that could be added to create a more balanced meal.
+
+    **Notes:**
+
+    * The accuracy of the CHO content estimation and GI values may vary depending on the image quality and ingredient identification.
+    * This is for informational purposes only and does not replace professional medical advice.
     """
 
     ## If submit button is clicked
@@ -247,62 +300,52 @@ def Food_Helper():
         response=get_gemini_response(input_prompt,image_data)
         st.write(response)
     
+    # Load data from CSV file
+file_path = "data/MohamedAIT ALI_glucose_3-7-2024.csv"
+df = pd.read_csv(file_path)
 
-def Statistics():
-    # Existing sample data
-    data = """FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 07:12 PM,0,457,,,,,,,,,,,,,,
-    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 07:27 PM,0,459,,,,,,,,,,,,,,
-    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 07:42 PM,0,455,,,,,,,,,,,,,,
-    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 07:57 PM,0,437,,,,,,,,,,,,,,
-    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 08:13 PM,0,414,,,,,,,,,,,,,,
-    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 08:28 PM,0,426,,,,,,,,,,,,,,
-    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 08:43 PM,0,433,,,,,,,,,,,,,,
-    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 08:58 PM,0,411,,,,,,,,,,,,,,
-    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 09:13 PM,0,383,,,,,,,,,,,,,,
-    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 09:28 PM,0,357,,,,,,,,,,,,,,
-    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 09:43 PM,0,322,,,,,,,,,,,,,,
-    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 09:58 PM,0,280,,,,,,,,,,,,,,
-    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 10:13 PM,0,231,,,,,,,,,,,,,,
-    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 10:28 PM,0,182,,,,,,,,,,,,,,
-    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 10:43 PM,0,146,,,,,,,,,,,,,,"""
+# Rename column with spaces
+df.rename(columns={"Horodatage de l'appareil": "Timestamp"}, inplace=True)
 
-    # Additional data to be added
-    additional_data = """FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 10:58 PM,0,100,,,,,,,,,,,,,,
-    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 11:13 PM,0,90,,,,,,,,,,,,,,
-    FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 11:28 PM,0,85,,,,,,,,,,,,,,"""
+# Convert 'Timestamp' column to datetime
+df['Timestamp'] = pd.to_datetime(df['Timestamp'], format='%m/%d/%Y %H:%M')
 
-    # Concatenate additional data to the existing data
-    data += additional_data
+# Group by timestamp and aggregate
+df = df.groupby('Timestamp').first().reset_index()
 
-    # Function to process data
-    def process_data(data):
-        lines = data.splitlines()
-        data_list = [line.split(",") for line in lines]
-        dates = [row[2].strip() for row in data_list]
-        glucose_values = [int(row[4]) for row in data_list]
-        max_glucose = max(glucose_values)
-        min_glucose = min(glucose_values)
-        df = pd.DataFrame({"Date": dates, "Glucose Value": glucose_values})
-        # Optional: Convert "Date" to datetime format
-        df["Date"] = pd.to_datetime(df["Date"], format='%m-%d-%Y %I:%M %p')
-        return df,max_glucose,min_glucose
+# Reindex with continuous range of timestamps
+min_timestamp = df['Timestamp'].min()
+max_timestamp = df['Timestamp'].max()
+all_timestamps = pd.date_range(start=min_timestamp, end=max_timestamp, freq='T')  # Minute frequency
+df = df.set_index('Timestamp').reindex(all_timestamps).reset_index()
+
+# Interpolate missing values
+df['Historique de la glycémie mg/dL'] = df['Historique de la glycémie mg/dL'].interpolate(method='linear')
+
+# Filter data for the last 200 days
+last_200_days = datetime.now() - timedelta(days=30)
+df_last_200_days = df[df['index'] >= last_200_days]
+
+# Function to process data
+def process_data(df):
+    max_glucose = df["Historique de la glycémie mg/dL"].max()
+    min_glucose = df["Historique de la glycémie mg/dL"].min()
+    last_glucose_value = df.iloc[-1]["Historique de la glycémie mg/dL"]
+    percentage1 = (100 - last_glucose_value) / 100
+    return df, max_glucose, min_glucose, last_glucose_value, percentage1
 
     # Process the data
-    df, max_glucose, min_glucose= process_data(data)
-    last_glucose_value = df.iloc[-1]["Glucose Value"]
-    percentage1=(100-last_glucose_value)/100
+df_last_200_days, max_glucose, min_glucose, last_glucose_value, percentage1 = process_data(df_last_200_days)
+def Statistics():
+    st.title("Blood Glucose Monitoring Chart")
     col1, col2, col3 = st.columns(3)
     col1.metric("highest glucose level", str(max_glucose) +" mg/dL", "max%")
     col2.metric("lower glucose level", str(min_glucose) +" mg/dL", "-min%")
     col3.metric("Current glucose level", str(last_glucose_value)+" mg/dL", str(percentage1)+"%")
     # Title and header
-    st.title("Blood Glucose Monitoring Chart")
     st.header("FreeStyle LibreLink Data")
-
-
-
     # Display the line chart
-    st.line_chart(df, x="Date", y="Glucose Value")
+    st.line_chart(df_last_200_days, x="index", y="Historique de la glycémie mg/dL")
 
 if 'current_tab' not in st.session_state:
     st.session_state.current_tab = 'Home'

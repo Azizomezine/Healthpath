@@ -8,3 +8,6 @@ google-generativeai
 python-dotenv
 streamlit
 pillow
+streamlit_antd_components
+pyaudio
+Timestamp
