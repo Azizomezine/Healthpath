@@ -211,13 +211,15 @@ def Assistant():
         
 def generate_story():
     return 0 
-
+def get_gemini_response(input_prompt, image):
+    model=genai.GenerativeModel('gemini-pro-vision')
+    response=model.generate_content([input_prompt, image[0]])
+    return response.text
+def get_gemini_pro(input_user):
+    model = genai.GenerativeModel("gemini-pro")
+    response = model.generate_content(input_user)
+    return response.text
 def Food_Helper():
-    def get_gemini_response(input_prompt, image):
-        model=genai.GenerativeModel('gemini-pro-vision')
-        response=model.generate_content([input_prompt, image[0]])
-        return response.text
-
     def input_image_setup(uploaded_file):
         # Check if a file has been uploaded
         if uploaded_file is not None:
@@ -337,6 +339,7 @@ def process_data(df):
     # Process the data
 df_last_200_days, max_glucose, min_glucose, last_glucose_value, percentage1 = process_data(df_last_200_days)
 def Statistics():
+
     st.title("Blood Glucose Monitoring Chart")
     col1, col2, col3 = st.columns(3)
     col1.metric("highest glucose level", str(max_glucose) +" mg/dL", "max%")
@@ -346,6 +349,60 @@ def Statistics():
     st.header("FreeStyle LibreLink Data")
     # Display the line chart
     st.line_chart(df_last_200_days, x="index", y="Historique de la glycémie mg/dL")
+    st.header("Physical Activity Recommendation")
+    submit=st.button("Discover insights")
+
+    input_prompt="""
+    You are developing an AI assistant for individuals managing diabetes.
+
+    **Input:**
+
+     current glucose level in mg/dL ({last_glucose_value}).
+
+    **Output:**
+
+    1. Analyze Glucose Level:
+        * Determine if the user's current glucose level ({last_glucose_value} mg/dL) is within a safe range for exercise.
+        * If the glucose level is too low (<70 mg/dL) or too high (>250 mg/dL), advise against engaging in strenuous exercise.
+        * If the glucose level is within the safe range, provide encouragement to proceed with exercise.
+
+    2. Alternative Exercise Suggestions:
+        * If the glucose level is too low or too high for strenuous exercise, suggest alternative activities that are safe and beneficial.
+        * For low glucose levels, recommend activities like walking, light stretching, or yoga to avoid further lowering blood sugar.
+        * For high glucose levels, recommend activities like brisk walking, cycling, or swimming to help lower blood sugar levels.
+        * Provide step-by-step instructions or tips for each recommended activity to ensure safety and effectiveness.
+
+    3. Additional Recommendations:
+        * Offer general tips for exercising with diabetes, such as staying hydrated, checking glucose levels before and after exercise, and carrying snacks in case of hypoglycemia.
+        * Emphasize the importance of consulting with a healthcare professional before starting any new exercise regimen, especially for individuals with diabetes.
+
+    **Example Output:**
+
+    1. Analyze Glucose Level:
+        * Glucose level: {last_glucose_value} mg/dL
+        * Within safe range for exercise. Proceed with caution and monitor blood sugar levels.
+
+    2. Alternative Exercise Suggestions:
+        * Given the current glucose level, it's safe to engage in activities like brisk walking or light jogging.
+        * Step-by-step instructions for brisk walking:
+            - Wear comfortable shoes and clothing.
+            - Start with a warm-up by walking at a moderate pace for 5-10 minutes.
+            - Increase your pace to a brisk walk, maintaining a steady speed.
+            - Aim for at least 30 minutes of brisk walking.
+            - Cool down by walking at a slower pace for 5-10 minutes.
+        * Remember to carry water and glucose tablets in case of low blood sugar.
+
+    3. Additional Recommendations:
+        * Check glucose levels before and after exercise to monitor the impact on blood sugar.
+        * Consider consulting with a certified diabetes educator or fitness trainer for personalized exercise recommendations.
+    """
+
+    ## If submit button is clicked
+
+    if submit:
+        response=get_gemini_pro(input_prompt)
+        st.write(response)
+        
 
 if 'current_tab' not in st.session_state:
     st.session_state.current_tab = 'Home'
