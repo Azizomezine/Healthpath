@@ -155,10 +155,11 @@ body {
     background: #ffffff;
     box-shadow: 20px 20px 60px #969696, -20px -20px 60px #ffffff;
     width: 1029px;
-    height: 603px;
+    height: 142px;
     margin-left: -201px;
-    margin-top: 31px ;
-    
+    margin-top: 31px;
+    position: relative;
+    z-index: 1;
 }
 .styled-title{
     margin-left: 639px;
@@ -296,3 +297,7 @@ div.stButton > button:is(:focus, :focus-visible, :active) {
     width: 544px;
     color: white;
 }
+body {
+    background-image: url("data:bg_health/jpg;base64,%s");
+    background-size: cover;
+    }
