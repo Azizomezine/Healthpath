@@ -104,7 +104,6 @@ def home_page():
         # st.image(f'data:image/png;base64,{img_back}', use_column_width=False)
         st.markdown(f"""<img class="back_img"  src="data:image/png;base64,{img_back}" alt="Frozen Image">""",unsafe_allow_html=True)
     st.markdown("""<h1 class="Title">Welcome To HealthyPath</h1>""",unsafe_allow_html=True)
-    st.markdown("""<h1 class="Title">Welcome To HealthPath</h1>""",unsafe_allow_html=True)
 
 def generate_speech(input_text):
     speech_file_path = Path("speech.mp3")
@@ -237,60 +236,27 @@ def Food_Helper():
     ##initialize our streamlit app
 
 
-    st.header("Determine the right dose of insulin")
+    st.header("Food Helper")
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
-    image=""
-    ICR=st.text_input("insulin-to-carb ratio (ICR) (grams/unit)")   
+    image=""   
     if uploaded_file is not None:
         image = Image.open(uploaded_file)
         st.image(image, caption="Uploaded Image.", use_column_width=True)
 
 
-    submit=st.button("Discover insights")
+    submit=st.button("Tell me about the  glycemic index")
 
     input_prompt="""
-    You are an expert in meal prep AI assistant for diabetics. 
+    You are an expert in  meal prep AI assistant for diabetics where you need to see the food items from the image
+                and calculate the total glycemic index in mg/dl, also provide the details of every food items with  glycemic index  intake
+                is below format
 
-    **Input:**
+                1. Item 1 - no of  glycemic index  in mg/dl 
+                2. Item 2 - no of  glycemic index  in mg/dl
+                ---- 
+                ----
+    Finally you can also mention whether the food is healthy, balanced or not healthy and what all additional food items can be added in the diet which are healthy.
 
-    * Image of the meal
-
-    **Output:**
-
-    1. Food Items: List all the food items identified in the image.
-    2. Glycemic Index (GI): Provide the glycemic index (GI) in mg/dl for each food item.
-    3. Total Carbohydrates (CHO): Calculate the total grams of carbohydrate (CHO) for the entire meal.
-    4. Recommended Insulin Dose: 
-        * Analyze the image to estimate the total CHO content in the meal. 
-        * Based on the user's pre-configured insulin-to-carb ratio (ICR), calculate the recommended insulin dose using the formula: Total CHO (grams) / {ICR} (grams/unit) = Recommended Insulin Dose (units).
-
-    **Example Output:**
-
-    1. Food Items:
-        * Apple - 30g
-        * Bread - 50g
-        * Cheese - 10g
-
-    2. Glycemic Index (GI):
-        * Apple - 40 mg/dl
-        * Bread - 70 mg/dl
-        * Cheese - 0 mg/dl (Cheese has minimal impact on blood sugar)
-
-    3. Total Carbohydrates (CHO):  80 grams (calculated by adding the CHO content of each food item)
-
-    4. Recommended Insulin Dose:  
-        * Assuming user's ICR is 1 unit per 10 grams of CHO.
-        * Recommended dose = 80 grams / 10 grams/unit = 8 units
-
-    **Additional Information:**
-
-    * Indicate if the meal is balanced or not, considering factors like protein, fat, and fiber content (if possible to estimate from the image).
-    * Suggest additional healthy food items that could be added to create a more balanced meal.
-
-    **Notes:**
-
-    * The accuracy of the CHO content estimation and GI values may vary depending on the image quality and ingredient identification.
-    * This is for informational purposes only and does not replace professional medical advice.
     """
 
     ## If submit button is clicked
@@ -327,111 +293,39 @@ def Statistics():
 
     # Concatenate additional data to the existing data
     data += additional_data
-    # Load data from CSV file
-file_path = "data/MohamedAIT ALI_glucose_3-7-2024.csv"
-df = pd.read_csv(file_path)
 
-# Rename column with spaces
-df.rename(columns={"Horodatage de l'appareil": "Timestamp"}, inplace=True)
-
-# Convert 'Timestamp' column to datetime
-df['Timestamp'] = pd.to_datetime(df['Timestamp'], format='%m/%d/%Y %H:%M')
-
-# Group by timestamp and aggregate
-df = df.groupby('Timestamp').first().reset_index()
-
-# Reindex with continuous range of timestamps
-min_timestamp = df['Timestamp'].min()
-max_timestamp = df['Timestamp'].max()
-all_timestamps = pd.date_range(start=min_timestamp, end=max_timestamp, freq='T')  # Minute frequency
-df = df.set_index('Timestamp').reindex(all_timestamps).reset_index()
-
-# Interpolate missing values
-df['Historique de la glycémie mg/dL'] = df['Historique de la glycémie mg/dL'].interpolate(method='linear')
-
-# Filter data for the last 200 days
-last_200_days = datetime.now() - timedelta(days=30)
-df_last_200_days = df[df['index'] >= last_200_days]
-
-# Function to process data
-def process_data(df):
-    max_glucose = df["Historique de la glycémie mg/dL"].max()
-    min_glucose = df["Historique de la glycémie mg/dL"].min()
-    last_glucose_value = df.iloc[-1]["Historique de la glycémie mg/dL"]
-    percentage1 = (100 - last_glucose_value) / 100
-    return df, max_glucose, min_glucose, last_glucose_value, percentage1
+    # Function to process data
+    def process_data(data):
+        lines = data.splitlines()
+        data_list = [line.split(",") for line in lines]
+        dates = [row[2].strip() for row in data_list]
+        glucose_values = [int(row[4]) for row in data_list]
+        max_glucose = max(glucose_values)
+        min_glucose = min(glucose_values)
+        df = pd.DataFrame({"Date": dates, "Glucose Value": glucose_values})
+        # Optional: Convert "Date" to datetime format
+        df["Date"] = pd.to_datetime(df["Date"], format='%m-%d-%Y %I:%M %p')
+        return df,max_glucose,min_glucose
 
     # Process the data
-df_last_200_days, max_glucose, min_glucose, last_glucose_value, percentage1 = process_data(df_last_200_days)
-def Statistics():
-
-    st.title("Blood Glucose Monitoring Chart")
+    df, max_glucose, min_glucose= process_data(data)
+    last_glucose_value = df.iloc[-1]["Glucose Value"]
+    percentage1=(100-last_glucose_value)/100
     col1, col2, col3 = st.columns(3)
     col1.metric("highest glucose level", str(max_glucose) +" mg/dL", "max%")
     col2.metric("lower glucose level", str(min_glucose) +" mg/dL", "-min%")
     col3.metric("Current glucose level", str(last_glucose_value)+" mg/dL", str(percentage1)+"%")
     # Title and header
+    st.title("Blood Glucose Monitoring Chart")
     st.header("FreeStyle LibreLink Data")
+
+
+
     # Display the line chart
     st.line_chart(df, x="Date", y="Glucose Value")
     
     
     
-    st.line_chart(df_last_200_days, x="index", y="Historique de la glycémie mg/dL")
-    st.header("Physical Activity Recommendation")
-    submit=st.button("Discover insights")
-
-    input_prompt="""
-    You are developing an AI assistant for individuals managing diabetes.
-
-    **Input:**
-
-     current glucose level in mg/dL ({last_glucose_value}).
-
-    **Output:**
-
-    1. Analyze Glucose Level:
-        * Determine if the user's current glucose level ({last_glucose_value} mg/dL) is within a safe range for exercise.
-        * If the glucose level is too low (<70 mg/dL) or too high (>250 mg/dL), advise against engaging in strenuous exercise.
-        * If the glucose level is within the safe range, provide encouragement to proceed with exercise.
-
-    2. Alternative Exercise Suggestions:
-        * If the glucose level is too low or too high for strenuous exercise, suggest alternative activities that are safe and beneficial.
-        * For low glucose levels, recommend activities like walking, light stretching, or yoga to avoid further lowering blood sugar.
-        * For high glucose levels, recommend activities like brisk walking, cycling, or swimming to help lower blood sugar levels.
-        * Provide step-by-step instructions or tips for each recommended activity to ensure safety and effectiveness.
-
-    3. Additional Recommendations:
-        * Offer general tips for exercising with diabetes, such as staying hydrated, checking glucose levels before and after exercise, and carrying snacks in case of hypoglycemia.
-        * Emphasize the importance of consulting with a healthcare professional before starting any new exercise regimen, especially for individuals with diabetes.
-
-    **Example Output:**
-
-    1. Analyze Glucose Level:
-        * Glucose level: {last_glucose_value} mg/dL
-        * Within safe range for exercise. Proceed with caution and monitor blood sugar levels.
-
-    2. Alternative Exercise Suggestions:
-        * Given the current glucose level, it's safe to engage in activities like brisk walking or light jogging.
-        * Step-by-step instructions for brisk walking:
-            - Wear comfortable shoes and clothing.
-            - Start with a warm-up by walking at a moderate pace for 5-10 minutes.
-            - Increase your pace to a brisk walk, maintaining a steady speed.
-            - Aim for at least 30 minutes of brisk walking.
-            - Cool down by walking at a slower pace for 5-10 minutes.
-        * Remember to carry water and glucose tablets in case of low blood sugar.
-
-    3. Additional Recommendations:
-        * Check glucose levels before and after exercise to monitor the impact on blood sugar.
-        * Consider consulting with a certified diabetes educator or fitness trainer for personalized exercise recommendations.
-    """
-
-    ## If submit button is clicked
-
-    if submit:
-        response=get_gemini_pro(input_prompt)
-        st.write(response)
-        
 
 if 'current_tab' not in st.session_state:
     st.session_state.current_tab = 'Home'
@@ -454,4 +348,4 @@ elif st.session_state.current_tab == 'Assistant':
 elif st.session_state.current_tab == 'Food-Helper':
     Food_Helper()
 elif st.session_state.current_tab == 'Statistics':
-    Statistics()        
+    Statistics()
