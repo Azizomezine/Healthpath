@@ -103,7 +103,7 @@ def home_page():
         img_back = base64.b64encode(img_file.read()).decode("utf-8")
         # st.image(f'data:image/png;base64,{img_back}', use_column_width=False)
         st.markdown(f"""<img class="back_img"  src="data:image/png;base64,{img_back}" alt="Frozen Image">""",unsafe_allow_html=True)
-    st.markdown("""<h1 class="Title">Welcome To CogniSmile</h1>""",unsafe_allow_html=True)
+    st.markdown("""<h1 class="Title">Welcome To HealthyPath</h1>""",unsafe_allow_html=True)
 
 def generate_speech(input_text):
     speech_file_path = Path("speech.mp3")
@@ -152,9 +152,6 @@ def Assistant():
             st.markdown(message["content"])
 
     
-    
-    
-    
     # Accept user input
     if prompt := st.chat_input("What is up?"):
         
@@ -193,6 +190,28 @@ def generate_story():
     return 0 
 
 def Food_Helper():
+    
+    with open('style.css') as f:
+        st.markdown('<style>{}</style>'.format(f.read()), unsafe_allow_html=True)
+    # Display HTML content
+    st.markdown("""
+    <div class="area" >
+        <ul class="circles">
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+        </ul>
+                
+    </div >
+    """, unsafe_allow_html=True)
+    
     def get_gemini_response(input_prompt, image):
         model=genai.GenerativeModel('gemini-pro-vision')
         response=model.generate_content([input_prompt, image[0]])
@@ -249,6 +268,7 @@ def Food_Helper():
     
 
 def Statistics():
+    
     # Existing sample data
     data = """FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 07:12 PM,0,457,,,,,,,,,,,,,,
     FreeStyle LibreLink,10D06121-1654-4FE8-8850-08C1E630EF7C,07-29-2022 07:27 PM,0,459,,,,,,,,,,,,,,
@@ -303,6 +323,9 @@ def Statistics():
 
     # Display the line chart
     st.line_chart(df, x="Date", y="Glucose Value")
+    
+    
+    
 
 if 'current_tab' not in st.session_state:
     st.session_state.current_tab = 'Home'
@@ -312,7 +335,7 @@ with st.sidebar:
         sac.MenuItem('Home', icon='house-fill'),
         sac.MenuItem('Assistant', icon='chat-text-fill'),
         sac.MenuItem('Food-Helper', icon='bi bi-award-fill'),
-        sac.MenuItem('Statistics', icon='easel2-fill')
+        sac.MenuItem('Statistics', icon='bi bi-bar-chart-fill')
     ], color='cyan', size='lg', open_all=True)
 
 if selected_tab != st.session_state.current_tab:
