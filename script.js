@@ -1,23 +1,60 @@
-const body = document.querySelector("body"),
-  sidebar = document.querySelector(".sidebar"),
-  toggle = document.querySelector(".toggle"),
-  modeSwitch = document.querySelector(".toggle-switch"),
-  modeText = document.querySelector(".mode-text"),
-  searchBtn = document.querySelector(".search-bar");
+const startButton = document.getElementById('start');
+const stopButton = document.getElementById('stop');
+const transcription = document.getElementById('transcription');
 
-modeSwitch.addEventListener("click", () => {
-  body.classList.toggle("dark");
-  //   document.querySelector(".mode-text").innertext=""
+let recognition;
 
-  if (body.classList.contains("dark")) {
-    modeText.innerText = " Light Mode ";
-  } else modeText.innerText = " Dark Mode ";
-});
+if ('webkitSpeechRecognition' in window) {
+  recognition = new webkitSpeechRecognition();
+} else if ('SpeechRecognition' in window) {
+  recognition = new SpeechRecognition();
+} else {
+  alert('Your browser does not support Speech Recognition');
+}
 
-toggle.addEventListener("click", () => {
-  sidebar.classList.toggle("close");
-});
+if (recognition) {
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = 'en-US';
 
-searchBtn.addEventListener("click", () => {
-  sidebar.classList.remove("close");
-});
+  recognition.onstart = () => {
+    startButton.disabled = true;
+    stopButton.disabled = false;
+    transcription.innerHTML = 'Listening...';
+  };
+
+  recognition.onresult = (event) => {
+    let interimTranscript = '';
+    let finalTranscript = '';
+
+    for (let i = 0; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        finalTranscript += transcript;
+      } else {
+        interimTranscript += transcript;
+      }
+    }
+
+    transcription.innerHTML = finalTranscript + '<i style="color: #777;">' + interimTranscript + '</i>';
+  };
+
+  recognition.onerror = (event) => {
+    console.error(event.error);
+    alert('Error occurred in speech recognition: ' + event.error);
+  };
+
+  recognition.onend = () => {
+    startButton.disabled = false;
+    stopButton.disabled = true;
+    transcription.innerHTML += '<p><i>Stopped listening</i></p>';
+  };
+
+  startButton.addEventListener('click', () => {
+    recognition.start();
+  });
+
+  stopButton.addEventListener('click', () => {
+    recognition.stop();
+  });
+}
