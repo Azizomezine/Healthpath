@@ -1,8 +1,7 @@
-portaudio
 imgurpython
 pandas
 openai
 pillow
 streamlit
 streamlit_antd_components
-pyaudio
+pip install PyAudio==0.2.13
