@@ -4,7 +4,6 @@ import streamlit as st
 import streamlit.components.v1 as components
 import base64
 import time
-import pyaudio
 import wave
 import requests
 import pandas as pd
@@ -23,31 +22,6 @@ from dotenv import load_dotenv
 #api_key = os.getenv("api_key")
 api_key = st.secrets["openai"]["api_key"]
 # ------------------------------------------- Record Voice Notes ----------------------------------------------------------
-
-def record_audio(seconds=5, rate=44100, channels=1):
-    CHUNK = 1024
-    FORMAT = pyaudio.paInt16
-    audio = pyaudio.PyAudio()
-    stream = audio.open(format=FORMAT, channels=channels,
-                        rate=rate, input=True,
-                        frames_per_buffer=CHUNK)
-
-    frames = []
-    for i in range(int(rate / CHUNK * seconds)):
-        data = stream.read(CHUNK)
-        frames.append(data)
-
-    stream.stop_stream()
-    stream.close()
-    audio.terminate()
-
-    # Convert frames to binary data
-    wave_output = wave.open("output.wav", 'wb')
-    wave_output.setnchannels(channels)
-    wave_output.setsampwidth(audio.get_sample_size(FORMAT))
-    wave_output.setframerate(rate)
-    wave_output.writeframes(b''.join(frames))
-    wave_output.close()
 
 # ----------------------------------------------- autoplay audio -----------------------------------------------------------
 
