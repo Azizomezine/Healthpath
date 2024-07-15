@@ -4,5 +4,4 @@ openai
 pillow
 streamlit
 streamlit_antd_components
-pyaudio
 langflow
