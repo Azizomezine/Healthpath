@@ -4,5 +4,5 @@ openai
 pillow
 streamlit
 streamlit_antd_components
-PyAudio==0.2.13
+pyaudio
 langflow
